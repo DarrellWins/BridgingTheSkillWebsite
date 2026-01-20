@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Life Experience → Resume Translator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+/* ===== YOUR ORIGINAL STYLES (UNCHANGED) ===== */
+* { box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    min-height: 100vh;
+    padding: 20px;
+}
+.container {
+    max-width: 800px;
+    margin: auto;
+    background: white;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.2);
+}
+h1 { text-align: center; color: #667eea; }
+.subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+.form-section { margin-bottom: 20px; }
+label { font-weight: 600; display: block; margin-bottom: 6px; }
+input, select {
+    width: 100%; padding: 12px;
+    border-radius: 8px; border: 2px solid #ddd;
+}
+button {
+    background: #667eea; color: white;
+    padding: 12px 30px;
+    border-radius: 8px;
+    border: none; cursor: pointer;
+    font-weight: 600;
+}
+button:hover { background: #5568d3; }
+.hidden { display: none; }
+.bullet-item {
+    padding: 12px; border: 2px solid #ddd;
+    border-radius: 8px; margin: 10px 0;
+    cursor: pointer;
+}
+.bullet-item.selected {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+<h1>🎯 Life Experience → Resume Translator</h1>
+<p class="subtitle">Turn real experiences into professional resume bullets</p>
+
+<div id="step1">
+<label>Your Name</label>
+<input id="userName">
+<button onclick="start()">Continue</button>
+</div>
+
+<div id="step2" class="hidden">
+<label>Category</label>
+<select id="category">
+<option>Work</option>
+<option>Volunteer</option>
+<option>Other</option>
+</select>
+
+<label>Role / Position</label>
+<input id="role">
+
+<label>Main Skill</label>
+<select id="skill">
+<option>Leadership</option>
+<option>Communication</option>
+<option>Problem-Solving</option>
+<option>Teamwork</option>
+<option>Creative</option>
+<option>Taking Action</option>
+</select>
+
+<button onclick="generate()">Generate Bullets</button>
+</div>
+
+<div id="step3" class="hidden">
+<h3>Select 2–3 bullets</h3>
+<div id="bullets"></div>
+<button onclick="save()">Save Experience</button>
+</div>
+
+<div id="output"></div>
+</div>
+
+<script>
+/* ========= UPGRADED LOGIC (PYTHON → JS) ========= */
+
+const ACTION_VERBS = {
+ Leadership: ["Led","Coordinated","Managed","Mentored","Supervised","Directed"],
+ Communication: ["Communicated","Presented","Advised","Collaborated","Engaged"],
+ "Problem-Solving": ["Analyzed","Developed","Designed","Improved","Resolved"],
+ Teamwork: ["Collaborated","Partnered","Supported","Contributed","Assisted"],
+ Creative: ["Created","Designed","Produced","Generated","Conceptualized"],
+ "Taking Action": ["Implemented","Executed","Initiated","Delivered","Completed"]
+};
+
+const ROLE_OBJECTS = {
+ "tech intern": "technical projects and team initiatives",
+ "software intern": "software development tasks",
+ "data intern": "data analysis and reporting workflows",
+ intern: "assigned projects and operational responsibilities",
+ tutor: "students through individualized academic instruction",
+ "math tutor": "students in core mathematics concepts",
+ mentor: "peers through professional development support",
+ volunteer: "community members through service initiatives",
+ cashier: "customers with transactions and point-of-sale operations",
+ teacher: "students through instructional planning and delivery"
+};
+
+const SKILL_KEYWORDS = {
+ intern: ["industry best practices","project collaboration"],
+ tutor: ["personalized learning strategies","academic progress tracking"],
+ mentor: ["goal setting","professional development"],
+ volunteer: ["community outreach","program coordination"]
+};
+
+let name="", bullets=[], selected=[], experiences=[];
+
+function start(){
+ name=document.getElementById("userName").value.trim();
+ if(!name) return alert("Enter your name");
+ document.getElementById("step1").classList.add("hidden");
+ document.getElementById("step2").classList.remove("hidden");
+}
+
+function normalizeRole(role){
+ role=role.toLowerCase();
+ if(ROLE_OBJECTS[role]) return ROLE_OBJECTS[role];
+ for(let key in ROLE_OBJECTS){
+   if(role.includes(key)) return ROLE_OBJECTS[key];
+ }
+ return "assigned responsibilities and team objectives";
+}
+
+function keywords(role){
+ role=role.toLowerCase();
+ return SKILL_KEYWORDS[role] || ["professional skills","team collaboration"];
+}
+
+function generate(){
+ const role=document.getElementById("role").value;
+ const skill=document.getElementById("skill").value;
+ if(!role) return alert("Enter a role");
+
+ bullets=[];
+ selected=[];
+
+ const obj=normalizeRole(role);
+ const verbs=[...ACTION_VERBS[skill]];
+ const keys=keywords(role);
+
+ const templates=[
+  v=>`${v} ${obj}`,
+  v=>`${v} ${obj} to support organizational goals`,
+  v=>`${v} ${obj} while applying ${keys[0]}`,
+  v=>`${v} ${obj} in collaboration with team members`,
+  v=>`${v} ${obj} while developing ${keys[0]} and ${keys[1]}`
+ ];
+
+ for(let i=0;i<5;i++){
+  const v=verbs.splice(Math.floor(Math.random()*verbs.length),1)[0];
+  const t=templates[Math.floor(Math.random()*templates.length)];
+  bullets.push(t(v));
+ }
+
+ renderBullets();
+ document.getElementById("step2").classList.add("hidden");
+ document.getElementById("step3").classList.remove("hidden");
+}
+
+function renderBullets(){
+ const box=document.getElementById("bullets");
+ box.innerHTML="";
+ bullets.forEach((b,i)=>{
+  const div=document.createElement("div");
+  div.className="bullet-item";
+  div.textContent=b;
+  div.onclick=()=>{
+   if(selected.includes(b)){
+     selected=selected.filter(x=>x!==b);
+     div.classList.remove("selected");
+   } else if(selected.length<3){
+     selected.push(b);
+     div.classList.add("selected");
+   }
+  };
+  box.appendChild(div);
+ });
+}
+
+function save(){
+ if(selected.length<2) return alert("Select at least 2 bullets");
+ experiences.push({
+  category:document.getElementById("category").value,
+  role:document.getElementById("role").value,
+  bullets:[...selected]
+ });
+ showResume();
+}
+
+function showResume(){
+ let html=`<h2 style="text-align:center">Resume Preview</h2><h3>${name}</h3>`;
+ experiences.forEach(e=>{
+  html+=`<h4>${e.role}</h4><ul>`;
+  e.bullets.forEach(b=>html+=`<li>${b}</li>`);
+  html+=`</ul>`;
+ });
+ document.getElementById("output").innerHTML=html;
+ document.getElementById("output").style.display="block";
+}
+</script>
+</body>
+</html>
